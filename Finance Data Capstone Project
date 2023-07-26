@@ -1,0 +1,66 @@
+import pandas_datareader as web
+from pandas_datareader import data as pdr
+import yfinance as yf
+yf.pdr_override()
+import pandas as pd
+import numpy as np
+import datetime
+import matplotlib
+%matplotlib inline 
+
+start = datetime.datetime(2006,1,1)
+end = datetime.datetime(2016,1,1)
+
+BAC = pdr.DataReader("BAC", start, end)
+
+# CitiGroup
+C = pdr.DataReader("C", start, end)
+
+# Goldman Sachs
+GS = pdr.DataReader("GS", start, end)
+
+# JPMorgan Chase
+JPM = pdr.DataReader("JPM", start, end)
+
+# Morgan Stanley
+MS = pdr.DataReader("MS", start, end)
+
+# Wells Fargo
+WFC = pdr.DataReader("WFC", start, end)
+
+tickers = ['BAC', 'C', 'GS', 'JPM', 'MS', 'WFC']
+bank_stocks = pd.concat([BAC, C, GS, JPM, MS, WFC], axis = 1, keys = tickers)
+bank_stocks.columns.names = ['Bank Ticker','Stock Info']
+
+
+bank_stocks.xs(key = 'Close', axis = 1, level = 'Stock Info')
+
+for tick in tickers: 
+    returns[tick+'  Return'] = bank_stocks[tick]['Close'].pct_change()
+returns.head()
+
+#PLOTS
+import seaborn as sns
+sns.pairplot(returns[1:])
+
+#
+returns.idxmin()
+returns.idxmax()
+returns.std()
+returns.loc['2015-01-01':'2015-12-31'].std()
+
+sns.displot(returns.loc['2015-01-01':'2015-12-31']['MS  Return'], color = 'green', bins = 50)
+
+#Close Price for Each Bank
+for tick in tickers:
+    bank_stocks[tick]['Close'].plot(figsize=(12,4),label=tick)
+plt.legend()
+
+#Plotting moving averages for stocks in year 2008
+plt.figure(figsize = (12,6))
+bank_stocks.loc['2008-01-01':'2008-12-31']['BAC']['Close'].plot()
+bank_stocks.loc['2008-01-01':'2008-12-31']['BAC']['Close'].rolling(30).mean().plot(label = '30 Day avg')
+plt.legend()
+
+#Heatmap of correlation between stocks close price
+sns.heatmap(bank_stocks.xs(key = 'Close', axis = 1, level = 'Stock Info').corr(), annot = True)
